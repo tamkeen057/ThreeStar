@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Three Star Crush Plant</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f5f5;font-family:Arial,sans-serif;color:#222}
+.app{max-width:480px;margin:auto;min-height:100vh;background:#fff;padding-bottom:70px}
+#loading,#signin{position:fixed;inset:0;z-index:99;display:flex;align-items:center;justify-content:center;text-align:center}
+#loading{background:#f45100;color:#fff}.signbox{width:92%;max-width:400px;background:#fff;border-radius:12px;padding:24px;box-shadow:0 4px 20px #ccc}
+#signin{display:none;background:#f5f5f5;z-index:80}.loader-logo{width:86px;height:86px;border:3px solid #fff;border-radius:50%;display:grid;place-items:center;font-size:42px;margin:auto}
+.input{width:100%;height:44px;border:1px solid #ccc;border-radius:6px;padding:0 12px;margin:6px 0}
+.btn{border:0;border-radius:6px;background:#f45100;color:#fff;padding:11px;width:100%;font-weight:bold;margin-top:7px}
+header{background:#f45100;color:#fff;padding:10px 12px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+.logo{width:40px;height:40px;border:2px solid #fff;border-radius:50%;display:grid;place-items:center;font-size:21px}
+.headtext{flex:1}.headtext b{font-size:17px}.headtext small{display:block;font-size:10px}
+.search{background:#fff;border:0;border-radius:5px;height:38px;width:calc(100% - 20px);margin:10px;padding:0 12px}
+.banner{margin:10px;border-radius:8px;background:linear-gradient(120deg,#ff6d00,#ff9800);color:#fff;padding:18px}
+.categories{display:flex;gap:9px;overflow:auto;padding:8px 10px}.cat{min-width:78px;text-align:center;border:1px solid #eee;border-radius:8px;padding:9px;font-size:12px}
+.title{font-size:18px;padding:5px 12px}.products{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:8px}
+.card{border:1px solid #e3e3e3;border-radius:8px;padding:8px}.pic{height:120px;background:#eee;border-radius:6px;display:grid;place-items:center;overflow:hidden;font-size:40px}.pic img{width:100%;height:100%;object-fit:cover}
+.price{font-size:16px;color:#f45100;font-weight:bold}.old{text-decoration:line-through;color:#999;font-size:11px}
+.page{display:none}.page.active{display:block}.box{margin:12px;padding:15px;border:1px solid #ddd;border-radius:8px;background:#fff}
+.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:480px;width:100%;height:64px;background:#fff;border-top:1px solid #ddd;display:grid;grid-template-columns:repeat(4,1fr);z-index:20}
+.nav{border:0;background:#fff;color:#666;font-size:11px}.nav span{display:block;font-size:20px}.nav.active{color:#f45100}.cartline{padding:10px 0;border-bottom:1px solid #eee}.remove{float:right;border:0;background:#eee;padding:4px 7px;border-radius:4px}
+.status{display:inline-block;padding:6px 10px;border-radius:15px;background:#eee;font-size:12px}.pending{background:#ffe0b2}.confirmed{background:#d1ecf1}.rejected{background:#f8d7da}.shipped{background:#d9e7ff}.delivered{background:#d4edda}
+</style>
+</head>
+<body>
+<div id="loading"><div><div class="loader-logo">★</div><h2>Three Star Crush Plant</h2><p>Loading...</p></div></div>
+<div id="signin"><div class="signbox">
+<div style="width:82px;height:82px;border-radius:50%;background:#f45100;color:#fff;display:grid;place-items:center;font-size:38px;margin:auto">★</div>
+<div class="loader-logo" style="background:#f45100;color:#fff">★</div>
+<h2 style="color:#f45100">Welcome</h2><p>Sign in to continue shopping</p>
+<div id="accountMode">
+<input id="accountName" class="input" placeholder="Full Name">
+<input id="loginEmail" class="input" type="email" placeholder="Email">
+<input id="loginPass" class="input" type="password" placeholder="Password">
+<label style="display:block;text-align:left;font-size:12px;color:#666;margin-top:8px">Profile Photo (DP)</label>
+<input id="accountDP" class="input" type="file" accept="image/*">
+</div>
+<button class="btn" onclick="createAccount()">Create Account & Sign In</button>
+<button class="btn" style="background:#fff;color:#f45100;border:1px solid #f45100" onclick="signInExisting()">Sign In Existing Account</button>
+</div></div>
+
+<div class="app" id="app" style="display:none">
+<section id="home" class="page active">
+<header><div class="logo">★</div><div class="headtext"><b>Three Star Crush Plant</b><small>Quality Crush</small></div></header>
+<input id="search" class="search" placeholder="🔍 Search products..." oninput="renderProducts()">
+<div class="banner"><h2>Build Better 🏗️</h2><p>Quality crush & building material delivered to your location.</p></div>
+<div class="categories"><div class="cat">🪨<br>Crush</div><div class="cat">🏗️<br>Building</div><div class="cat">🚚<br>Delivery</div><div class="cat">⭐<br>Popular</div></div>
+<h3 class="title">Flash Deals</h3><div id="products" class="products"></div>
+</section>
+
+<section id="orders" class="page"><header><div class="logo">🚚</div><div class="headtext"><b>My Orders</b><small>Order status</small></div></header><div id="orderList"></div></section>
+
+<section id="cart" class="page"><header><div class="logo">🛒</div><div class="headtext"><b>Shopping Cart</b><small id="cartCount">0 items</small></div></header>
+<div id="cartBox" class="box"></div><div class="box"><h3>Customer Details</h3>
+<input id="custName" class="input" placeholder="Full Name"><input id="custPhone" class="input" placeholder="Phone Number">
+<input id="custEmail" class="input" placeholder="Email"><textarea id="custAddress" class="input" style="height:80px;padding-top:10px" placeholder="Delivery Address"></textarea>
+<button class="btn" onclick="placeOrder()">Order on WhatsApp</button></div></section>
+
+<section id="account" class="page"><header><div id="accountDPView" class="logo">👤</div><div class="headtext"><b>My Account</b><small>Customer profile</small></div></header>
+<div class="box">
+<h3 id="accountWelcome">Customer Account</h3>
+<p><b>Name:</b> <span id="profileName">-</span></p>
+<p><b>Email:</b> <span id="profileEmail">-</span></p>
+<p><b>Phone:</b> <span id="profilePhone">-</span></p>
+<label style="font-size:12px;color:#666">Change DP</label>
+<input id="profileDP" class="input" type="file" accept="image/*" onchange="changeDP()">
+<button class="btn" onclick="saveProfilePhone()">Save Profile</button>
+<input id="profilePhoneInput" class="input" placeholder="Phone Number">
+<p style="font-size:12px;color:#777">Your account details and profile photo are stored with your customer account and are included with your orders.</p>
+</div></section>
+</div>
+
+<nav class="bottom">
+<button class="nav active" data-page="home" onclick="show('home')"><span>⌂</span>Home</button>
+<button class="nav" data-page="orders" onclick="show('orders');drawOrders()"><span>🚚</span>Orders</button>
+<button class="nav" data-page="cart" onclick="show('cart');renderCart()"><span>🛒</span>Cart</button>
+<button class="nav" data-page="account" onclick="show('account')"><span>👤</span>Account</button>
+</nav>
+
+<script>
+const P="tsp_products",O="tsp_orders";
+const samples=[
+{id:1,name:"10mm Crush",price:4200,old:4600,desc:"Quality 10mm crush",emoji:"🪨"},
+{id:2,name:"20mm Crush",price:4000,old:4400,desc:"Strong construction crush",emoji:"⛰️"},
+{id:3,name:"Fine Crush",price:3500,old:3800,desc:"Fine quality material",emoji:"🪨"},
+{id:4,name:"Building Sand",price:2800,old:3000,desc:"Clean building sand",emoji:"🏖️"}];
+let products=JSON.parse(localStorage.getItem(P)||"null")||samples;
+if(!localStorage.getItem(P))localStorage.setItem(P,JSON.stringify(products));
+let cart=[];
+function esc(x){return String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function renderProducts(){
+ let q=(document.getElementById("search").value||"").toLowerCase();
+ let a=products.filter(p=>p.name.toLowerCase().includes(q));
+ document.getElementById("products").innerHTML=a.map(p=>`<div class="card"><div class="pic">${p.image?`<img src="${p.image}">`:p.emoji||"🪨"}</div><b>${esc(p.name)}</b><p class="price">Rs ${Number(p.price).toLocaleString()}</p><span class="old">Rs ${p.old||""}</span><div style="font-size:11px;color:#777">${esc(p.desc||"")}</div><button class="btn" onclick="addCart(${p.id})">Add to Cart</button></div>`).join("")||"<p style='padding:12px'>No products found.</p>";
+}
+function addCart(id){let p=products.find(x=>x.id==id);if(p)cart.push(p);renderCart();show("cart")}
+function renderCart(){
+ document.getElementById("cartCount").textContent=cart.length+" item"+(cart.length===1?"":"s");
+ document.getElementById("cartBox").innerHTML=cart.length?cart.map((p,i)=>`<div class="cartline"><b>${esc(p.name)}</b><br>Rs ${p.price}<button class="remove" onclick="cart.splice(${i},1);renderCart()">Remove</button></div>`).join("")+`<h3>Total: Rs ${cart.reduce((s,p)=>s+Number(p.price),0).toLocaleString()}</h3>`:"Your cart is empty.";
+}
+function show(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".nav").forEach(x=>x.classList.toggle("active",x.dataset.page==id))}
+function getAccounts(){return JSON.parse(localStorage.getItem("tsp_accounts")||"[]")}
+function saveAccounts(a){localStorage.setItem("tsp_accounts",JSON.stringify(a))}
+function getCurrent(){let id=localStorage.getItem("tsp_current_account");return getAccounts().find(a=>a.id===id)}
+function openApp(a){
+ localStorage.setItem("tsp_signed","1");localStorage.setItem("tsp_current_account",a.id);
+ document.getElementById("signin").style.display="none";document.getElementById("app").style.display="block";renderProfile();
+}
+function createAccount(){
+ let name=accountName.value.trim(),email=loginEmail.value.trim().toLowerCase(),pass=loginPass.value,phone="";
+ if(!name||!email||!pass)return alert("Name, email and password are required");
+ let accounts=getAccounts();
+ if(accounts.some(a=>a.email===email))return alert("This email already has an account. Please use Sign In Existing Account.");
+ let finish=dp=>{
+   let a={id:"ACC-"+Date.now(),name,email,password:pass,phone,dp:dp||"",createdAt:new Date().toLocaleString()};
+   accounts.push(a);saveAccounts(accounts);openApp(a);
+ };
+ let f=accountDP.files[0];
+ if(f){let r=new FileReader();r.onload=()=>finish(r.result);r.readAsDataURL(f)}else finish("");
+}
+function signInExisting(){
+ let email=loginEmail.value.trim().toLowerCase(),pass=loginPass.value;
+ let a=getAccounts().find(x=>x.email===email&&x.password===pass);
+ if(!a)return alert("Email or password is incorrect");
+ openApp(a);
+}
+function renderProfile(){
+ let a=getCurrent();if(!a)return;
+ profileName.textContent=a.name;profileEmail.textContent=a.email;profilePhone.textContent=a.phone||"-";profilePhoneInput.value=a.phone||"";
+ accountWelcome.textContent="Welcome, "+a.name;
+ accountDPView.innerHTML=a.dp?`<img src="${a.dp}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:"👤";
+}
+function changeDP(){
+ let a=getCurrent(),f=profileDP.files[0];if(!a||!f)return;
+ let r=new FileReader();r.onload=()=>{let as=getAccounts(),x=as.find(y=>y.id===a.id);x.dp=r.result;saveAccounts(as);renderProfile()};r.readAsDataURL(f);
+}
+function saveProfilePhone(){
+ let a=getCurrent();if(!a)return;let as=getAccounts(),x=as.find(y=>y.id===a.id);x.phone=profilePhoneInput.value.trim();saveAccounts(as);renderProfile();alert("Profile saved");
+}
+function placeOrder(){
+ if(!cart.length)return alert("Cart is empty");
+ let name=custName.value.trim(),phone=custPhone.value.trim(),address=custAddress.value.trim();
+ if(!name||!phone||!address)return alert("Please fill Name, Phone and Address");
+ let total=cart.reduce((s,p)=>s+Number(p.price),0), orders=JSON.parse(localStorage.getItem(O)||"[]");
+ let a=getCurrent();
+let o={id:"TSP-"+Date.now(),date:new Date().toLocaleString(),accountId:a?.id||"",customer:{name:a?.name||name,phone:phone,email:a?.email||custEmail.value.trim()||"tamkeenejaz12@gamil.com",address},profilePhoto:a?.dp||"",items:cart.map(p=>({name:p.name,price:Number(p.price),quantity:1})),total,status:"Pending"};
+ orders.push(o);localStorage.setItem(O,JSON.stringify(orders));
+ let text=`Three Star Crush Plant Order\nOrder: ${o.id}\n\n`+o.items.map(p=>`${p.name} - Rs ${p.price}`).join("\n")+`\n\nName: ${name}\nPhone: ${phone}\nAddress: ${address}\nTotal: Rs ${total}`;
+ window.open("https://wa.me/92320506435?text="+encodeURIComponent(text),"_blank");cart=[];renderCart();alert("Order submitted");
+}
+function drawOrders(){
+ let a=JSON.parse(localStorage.getItem(O)||"[]");
+ document.getElementById("orderList").innerHTML=a.slice().reverse().map(o=>`<div class="box"><b>${o.id}</b><br><small>${esc(o.date)}</small><p><span class="status ${String(o.status).toLowerCase()}">${esc(o.status)}</span></p>${o.items.map(i=>`${esc(i.name)} × ${i.quantity||1} — Rs ${i.price}`).join("<br>")}<hr><b>Total: Rs ${o.total}</b></div>`).join("")||'<div class="box">No orders yet.</div>';
+}
+setInterval(()=>{products=JSON.parse(localStorage.getItem(P)||"[]");renderProducts();if(document.getElementById("orders").classList.contains("active"))drawOrders()},1000);
+setTimeout(()=>{document.getElementById("loading").style.display="none";if(getCurrent()){document.getElementById("app").style.display="block";renderProfile()}else document.getElementById("signin").style.display="flex"},1600);
+renderProducts();renderCart();
+</script>
+</body><script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyDPQYvx_2ZXs3KstAyn2IY9t06FwPbVc5w",
+    authDomain: "three-star-crush-plant-j-62553.firebaseapp.com",
+    projectId: "three-star-crush-plant-j-62553",
+    storageBucket: "three-star-crush-plant-j-62553.firebasestorage.app",
+    messagingSenderId: "207248880757",
+    appId: "1:207248880757:web:6826732d422362998b743c",
+    measurementId: "G-981DGP8015"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script></html>
